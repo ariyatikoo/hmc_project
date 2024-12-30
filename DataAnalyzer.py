@@ -1,11 +1,11 @@
 # author name: Ariya F Tikoo
-# fix line 7 please
+
 
 import pandas as pd
 import sys
 from datetime import datetime, timedelta
 sys.path.append('/Users/aft/VisualStudioCodeWorkspace/Python')
-from hmc_project.DataLoader import DataLoader
+from hmc_project.DataLoader import DataLoader # type: ignore
 
 class DataAnalyzer(DataLoader):
 
@@ -45,6 +45,7 @@ class DataAnalyzer(DataLoader):
         bg_table = bg_table.dropna(subset=['Readings (mg/dL)'])
         return bg_table['Readings (mg/dL)'].median()
     
+    
     def BGtimeInRange(self, specified_date, time_frame, lower_bound=75, upper_bound=135):
         self.getBGDict()
         if time_frame == '1 day':
@@ -53,10 +54,17 @@ class DataAnalyzer(DataLoader):
             bg_table = self.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
             bg_table = self.getBGTable()
+        else:
+            raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
-        column_data = bg_table['Readings (mg/dL)'].dropna()
+        # Ensure the column is numeric and drop invalid rows
+        bg_table['Readings (mg/dL)'] = pd.to_numeric(bg_table['Readings (mg/dL)'], errors='coerce')
+        bg_table = bg_table.dropna(subset=['Readings (mg/dL)'])  # Drop rows where conversion failed
+        column_data = bg_table['Readings (mg/dL)']
+
         in_range = column_data[(column_data >= lower_bound) & (column_data <= upper_bound)]
         return (len(in_range) / len(column_data)) * 100
+
     
     def BGpercentHigh(self, specified_date, time_frame, high_bound=180):
         self.getBGDict()
@@ -67,27 +75,37 @@ class DataAnalyzer(DataLoader):
             bg_table = self.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
             bg_table = self.getBGTable()
+        else:
+            raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
-        column_data = bg_table['Readings (mg/dL)'].dropna()
+        bg_table['Readings (mg/dL)'] = pd.to_numeric(bg_table['Readings (mg/dL)'], errors='coerce')
+        bg_table = bg_table.dropna(subset=['Readings (mg/dL)'])
+        column_data = bg_table['Readings (mg/dL)']
+
         high_values = column_data[column_data >= high_bound]
         return (len(high_values) / len(column_data)) * 100
     
     def BGpercentLow(self, specified_date, time_frame, low_bound=75):
         self.getBGDict()
-
+        
         if time_frame == '1 day':
             bg_table = self.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
             bg_table = self.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
             bg_table = self.getBGTable()
+        else:
+            raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
-        column_data = bg_table['Readings (mg/dL)'].dropna()
+        bg_table['Readings (mg/dL)'] = pd.to_numeric(bg_table['Readings (mg/dL)'], errors='coerce')
+        bg_table = bg_table.dropna(subset=['Readings (mg/dL)'])
+        column_data = bg_table['Readings (mg/dL)']
+
         low_values = column_data[column_data <= low_bound]
         return (len(low_values) / len(column_data)) * 100
     
     def getNumCorrections(self, column1_name='CorrectionDelivered', column2_name='InsulinDelivered', column3_name='FoodDelivered'):
-        insulin_table = self._load_table('getInsulinTable')
+        insulin_table = self.getInsulinTable()
         
         num_control_iq = (insulin_table[column1_name] != 0).sum()
         manual_corrections = ((insulin_table[column1_name] == 0) &
@@ -100,14 +118,11 @@ class DataAnalyzer(DataLoader):
         self.getBGDict()
 
         nighttime_data = self.getNighttimeBg(specific_date)  
-        
-        if nighttime_data.empty:
-            return "No nighttime data available for analysis."
 
         # Calculate stats
         nighttime_mean = nighttime_data['Readings (mg/dL)'].mean()
         nighttime_median = nighttime_data['Readings (mg/dL)'].median()
-        nighttime_tir = self.BGtimeInRange(column_name='Readings (mg/dL)', lower_bound=75, upper_bound=135)
+        nighttime_tir = self.BGtimeInRange(specific_date, '1 day')
 
         
         # Debugging outputs
@@ -216,7 +231,6 @@ class DataAnalyzer(DataLoader):
         else:
             return "No changes needed"
         
-        
 
     # helper function for carb ratio to determine if time2 is 2 hours after time1
     def isTwoHoursLater(time1, time2):
@@ -232,23 +246,26 @@ class DataAnalyzer(DataLoader):
 analyzer = DataAnalyzer()
 
 # Generate stats and round values
+
+
 BGmean = analyzer.calcBGmean('2024-11-18', '1 day')
-BGmean = str(round(BGmean, 3))
+BGmean = str(round(BGmean, 1))
 
 BGmedian = analyzer.calcBGmedian('2024-11-18', '1 day')
-BGmedian = str(round(BGmedian, 3))
+BGmedian = str(round(BGmedian, 1))
 
 bg_TIR = analyzer.BGtimeInRange('2024-11-18', '1 day')
-bg_TIR = str(round(bg_TIR, 3))
+bg_TIR = str(round(bg_TIR, 1))
 
 percent_high = analyzer.BGpercentHigh('2024-11-18', '1 day')
-percent_high = str(round(percent_high, 3))
+percent_high = str(round(percent_high, 1))
 
 percent_low = analyzer.BGpercentLow('2024-11-18', '1 day')
-percent_low = str(round(percent_low, 3))
+percent_low = str(round(percent_low, 1))
 
-numCorrections = analyzer.getNumCorrections()
+#numCorrections = analyzer.getNumCorrections() --> across all 2 weeks, not a specific day(can modify later if necessary)
 
+# these three methods are default to go across 3 days
 calcedNighttimeBasal = analyzer.checkNighttimeBasal("2024-11-18")
 
 morningSpike = analyzer.checkDawnPhenonmenon("2024-11-18")
@@ -257,13 +274,13 @@ carbRatioAdjustments = analyzer.checkCarbRatio("2024-11-18")
 
 # print statements
 print("\nAbove are debug prints--> below are actual outputs")
-print("\n")
+print("\nBlood Glucose and Insulin Analysis for November 18th, 2024:")
 print("\nMean blood glucose value: ", BGmean)
 print("\nMedian blood glucose value: ", BGmedian)
-print("\nTIR: ", bg_TIR)
-print("\nPercent high: ", percent_high)
-print("\nPercent low: ", percent_low)
-print("\nNumber of corrections: ", numCorrections)
+print("\nTIR: ", bg_TIR, "%")
+print("\nPercent high: ", percent_high, "%")
+print("\nPercent low: ", percent_low, "%")
+#print("\nNumber of corrections: ", numCorrections)
 
 print("\nCalculated nighttime basal: ", calcedNighttimeBasal)
 print("\nCalculated daytime basal: ", morningSpike)

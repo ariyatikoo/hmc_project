@@ -311,7 +311,7 @@ IGNORE ABOVE METHOD CALLS
 #print(insulinTable)
 
 #print(morningBg)
-print(nighttimeBg)
+#print(nighttimeBg)
 
 '''
 bgPast3Days = data_loader.getPast3DaysBg("2024-11-18")
