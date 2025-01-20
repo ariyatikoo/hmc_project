@@ -126,9 +126,9 @@ class DataAnalyzer(DataLoader):
 
         
         # Debugging outputs
-        print(f"Nighttime Mean: {nighttime_mean}")
-        print(f"Nighttime Median: {nighttime_median}")
-        print(f"Nighttime Time In Range: {nighttime_tir}")
+        #print(f"Nighttime Mean: {nighttime_mean}")
+        #print(f"Nighttime Median: {nighttime_median}")
+        #print(f"Nighttime Time In Range: {nighttime_tir}")
         
 
         # Determine basal adjustments
@@ -156,7 +156,7 @@ class DataAnalyzer(DataLoader):
         # Calculate stats
         morning_mean = morning_data['Readings (mg/dL)'].mean()
 
-        print("Morning BG Mean: ", morning_mean)
+        #print("Morning BG Mean: ", morning_mean)
       
         # Determine basal adjustments
         if morning_mean > 140:
@@ -224,7 +224,7 @@ class DataAnalyzer(DataLoader):
         print(compareValues) # debugger statement
 
         # 4. Adjust Carb Ratio
-        if (high_tally -1)> low_tally: # -1 because we don't want to make changes because of just 1 instance
+        if (high_tally -3)> low_tally: # -1 because we don't want to make changes because of just 1 instance
             return "Decrease carb ratio value by 1 (more insulin)"
         elif (low_tally -1) > high_tally:
             return "Increase carb ratio value by 1 (less insulin)"
@@ -239,6 +239,19 @@ class DataAnalyzer(DataLoader):
             time2 = datetime.strptime(time2, fmt)
 
             return time1 + timedelta(hours=2) <= time2
+    
+    def Summary(self, specific_date, BGmean, BGmedian, bg_TIR, percent_high, percent_low, calcedNighttimeBasal, morningSpike, carbRatioAdjustments) :
+        print("\nBlood Glucose and Insulin Analysis for", specific_date)
+        print("\nMean blood glucose value: ", BGmean)
+        print("\nMedian blood glucose value: ", BGmedian)
+        print("\nTIR: ", bg_TIR, "%")
+        print("\nPercent high: ", percent_high, "%")
+        print("\nPercent low: ", percent_low, "%")
+        #print("\nNumber of corrections: ", numCorrections)
+        print("\nCalculated nighttime basal: ", calcedNighttimeBasal)
+        print("\nCalculated daytime basal: ", morningSpike)
+        print("\nCarb Ratio Adjustments : ", carbRatioAdjustments)
+        print("\n")
 
     
 
@@ -246,7 +259,6 @@ class DataAnalyzer(DataLoader):
 analyzer = DataAnalyzer()
 
 # Generate stats and round values
-
 
 BGmean = analyzer.calcBGmean('2024-11-18', '1 day')
 BGmean = str(round(BGmean, 1))
@@ -273,16 +285,14 @@ morningSpike = analyzer.checkDawnPhenonmenon("2024-11-18")
 carbRatioAdjustments = analyzer.checkCarbRatio("2024-11-18")
 
 # print statements
-print("\nAbove are debug prints--> below are actual outputs")
-print("\nBlood Glucose and Insulin Analysis for November 18th, 2024:")
-print("\nMean blood glucose value: ", BGmean)
-print("\nMedian blood glucose value: ", BGmedian)
-print("\nTIR: ", bg_TIR, "%")
-print("\nPercent high: ", percent_high, "%")
-print("\nPercent low: ", percent_low, "%")
-#print("\nNumber of corrections: ", numCorrections)
+analyzer.Summary(
+    '2024-11-18', 
+    BGmean, 
+    BGmedian,
+    bg_TIR, 
+    percent_high, 
+    percent_low, 
+    calcedNighttimeBasal, 
+    morningSpike, 
+    carbRatioAdjustments)
 
-print("\nCalculated nighttime basal: ", calcedNighttimeBasal)
-print("\nCalculated daytime basal: ", morningSpike)
-print("\nCarb Ratio Adjustments : ", carbRatioAdjustments)
-print("\n")
