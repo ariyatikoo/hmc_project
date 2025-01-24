@@ -38,7 +38,7 @@ class LLMBackend(DataAnalyzer):
         ]
 
         print("Summary provided to the chatbot:\n", self.summary)
-        print("Hello! How may I assist you?")
+        print("\nHello! How may I assist you?")
 
         # Chat loop
         while True:
@@ -55,7 +55,7 @@ class LLMBackend(DataAnalyzer):
                     messages=conversation
                 )
                 reply = response.choices[0].message.content
-                print(f"ChatGPT: {reply}")
+                print(f"Cassie: {reply}")
                 conversation.append({"role": "assistant", "content": reply})
             except Exception as e:
                 print(f"Error: {e}")
