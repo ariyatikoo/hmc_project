@@ -7,10 +7,12 @@ from datetime import datetime, timedelta
 sys.path.append('/Users/aft/VisualStudioCodeWorkspace/Python')
 from hmc_project.DataLoader import DataLoader # type: ignore
 
+
 class DataAnalyzer(DataLoader):
 
     def __init__(self):
         super().__init__()
+        self.summary = "generated summary from DataAnalyzer"
     
     def calcBGmean(self, specified_date, time_frame):
         self.getBGDict()
@@ -221,7 +223,7 @@ class DataAnalyzer(DataLoader):
             elif bg_2hr < 90:  # Low tally
                 low_tally += 1
 
-        print(compareValues) # debugger statement
+        #print(compareValues) # debugger statement
 
         # 4. Adjust Carb Ratio
         if (high_tally -3)> low_tally: # -1 because we don't want to make changes because of just 1 instance
@@ -240,59 +242,49 @@ class DataAnalyzer(DataLoader):
 
             return time1 + timedelta(hours=2) <= time2
     
-    def Summary(self, specific_date, BGmean, BGmedian, bg_TIR, percent_high, percent_low, calcedNighttimeBasal, morningSpike, carbRatioAdjustments) :
+    def Summary(self, specific_date, time_frame) :
         print("\nBlood Glucose and Insulin Analysis for", specific_date)
+
+        # mean
+        BGmean = self.calcBGmean(specific_date, time_frame)
+        BGmean = str(round(BGmean, 1))
         print("\nMean blood glucose value: ", BGmean)
+
+        # median
+        BGmedian = self.calcBGmedian(specific_date, time_frame)
         print("\nMedian blood glucose value: ", BGmedian)
+
+        # time in range
+        bg_TIR = self.BGtimeInRange(specific_date, time_frame)
+        bg_TIR = str(round(bg_TIR, 1))
         print("\nTIR: ", bg_TIR, "%")
+
+        # percent high
+        percent_high = self.BGpercentHigh(specific_date, time_frame)
+        percent_high = str(round(percent_high, 1))
         print("\nPercent high: ", percent_high, "%")
+
+        # percent low
+        percent_low = self.BGpercentLow(specific_date, time_frame)
+        percent_low = str(round(percent_low, 1))
         print("\nPercent low: ", percent_low, "%")
+
         #print("\nNumber of corrections: ", numCorrections)
+
+        calcedNighttimeBasal = self.checkNighttimeBasal(specific_date)
+
+        morningSpike = self.checkDawnPhenonmenon(specific_date)
+
+        carbRatioAdjustments = self.checkCarbRatio(specific_date)
+
         print("\nCalculated nighttime basal: ", calcedNighttimeBasal)
         print("\nCalculated daytime basal: ", morningSpike)
         print("\nCarb Ratio Adjustments : ", carbRatioAdjustments)
         print("\n")
 
-    
 
-# create instance of class
-analyzer = DataAnalyzer()
+data_analyzer = DataAnalyzer()
 
-# Generate stats and round values
+summary = data_analyzer.Summary('2024-11-18', '1 day')
 
-BGmean = analyzer.calcBGmean('2024-11-18', '1 day')
-BGmean = str(round(BGmean, 1))
-
-BGmedian = analyzer.calcBGmedian('2024-11-18', '1 day')
-BGmedian = str(round(BGmedian, 1))
-
-bg_TIR = analyzer.BGtimeInRange('2024-11-18', '1 day')
-bg_TIR = str(round(bg_TIR, 1))
-
-percent_high = analyzer.BGpercentHigh('2024-11-18', '1 day')
-percent_high = str(round(percent_high, 1))
-
-percent_low = analyzer.BGpercentLow('2024-11-18', '1 day')
-percent_low = str(round(percent_low, 1))
-
-#numCorrections = analyzer.getNumCorrections() --> across all 2 weeks, not a specific day(can modify later if necessary)
-
-# these three methods are default to go across 3 days
-calcedNighttimeBasal = analyzer.checkNighttimeBasal("2024-11-18")
-
-morningSpike = analyzer.checkDawnPhenonmenon("2024-11-18")
-
-carbRatioAdjustments = analyzer.checkCarbRatio("2024-11-18")
-
-# print statements
-analyzer.Summary(
-    '2024-11-18', 
-    BGmean, 
-    BGmedian,
-    bg_TIR, 
-    percent_high, 
-    percent_low, 
-    calcedNighttimeBasal, 
-    morningSpike, 
-    carbRatioAdjustments)
 

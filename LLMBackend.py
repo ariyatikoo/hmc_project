@@ -1,29 +1,32 @@
+import sys
 from openai import OpenAI
 import os
-from hmc_project.DataAnalyzer import DataAnalyzer  # type: ignore
+sys.path.append('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project')
+from DataAnalyzer import DataAnalyzer  
 
 class LLMBackend(DataAnalyzer):
-    def __init__(self):
-        super().__init__()
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model = "gpt-4"
-        self.data_analyzer = DataAnalyzer()
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    model = "gpt-4"
+    
+    def __init__(self, summary=None):
+        super().__init__()  # Ensure DataAnalyzer's constructor runs
+        if summary is not None:
+            self.summary = summary  # Override if provided
 
     def chat_with_gpt(self):
-        print("Hello!")
+        
+        # Validate summary content
+        if not self.summary :
+            print("Error: summary nonexistent.")
+            return
+        elif not isinstance(self.summary, str):
+            print("Error: summary data is invalid.")
+            return
         
 
-        summary = self.data_analyzer.Summary(
-            '2024-11-18',
-            self.data_analyzer.BGmean,
-            self.data_analyzer.BGmedian,
-            self.data_analyzer.bg_TIR,
-            self.data_analyzer.percent_high,
-            self.data_analyzer.percent_low,
-            self.data_analyzer.calcedNighttimeBasal,
-            self.data_analyzer.morningSpike,
-            self.data_analyzer.carbRatioAdjustments
-        )
+        print("Hello!")
+        
 
         # Start conversation
         conversation = [
@@ -33,14 +36,16 @@ class LLMBackend(DataAnalyzer):
             },
             {
                 "role": "user",
-                "content": summary
+                "content": self.summary
             }
         ]
+
+        print(self.summary)
 
         while True:
             user_input = input("User: ")  # User prompt
             if user_input.lower() == "exit":
-                print("Goodbye")
+                print("Goodbye!")
                 break
 
             conversation.append({
@@ -49,7 +54,7 @@ class LLMBackend(DataAnalyzer):
             })
 
             try:
-                response = self.client.ChatCompletion.create(
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=conversation
                 )
