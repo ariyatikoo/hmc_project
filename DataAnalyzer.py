@@ -12,7 +12,7 @@ class DataAnalyzer(DataLoader):
 
     def __init__(self):
         super().__init__()
-        self.summary = "generated summary from DataAnalyzer"
+        self.summary = "generated from data analyzer"
     
     def calcBGmean(self, specified_date, time_frame):
         self.getBGDict()
@@ -242,45 +242,44 @@ class DataAnalyzer(DataLoader):
 
             return time1 + timedelta(hours=2) <= time2
     
-    def Summary(self, specific_date, time_frame) :
-        print("\nBlood Glucose and Insulin Analysis for", specific_date)
+    def Summary(self, specific_date, time_frame):
+        output = []
+        output.append(f"\nBlood Glucose and Insulin Analysis for {specific_date}")
 
         # mean
         BGmean = self.calcBGmean(specific_date, time_frame)
         BGmean = str(round(BGmean, 1))
-        print("\nMean blood glucose value: ", BGmean)
+        output.append(f"\nMean blood glucose value: {BGmean}")
 
         # median
         BGmedian = self.calcBGmedian(specific_date, time_frame)
-        print("\nMedian blood glucose value: ", BGmedian)
+        output.append(f"\nMedian blood glucose value: {BGmedian}")
 
         # time in range
         bg_TIR = self.BGtimeInRange(specific_date, time_frame)
         bg_TIR = str(round(bg_TIR, 1))
-        print("\nTIR: ", bg_TIR, "%")
+        output.append(f"\nTIR: {bg_TIR}%")
 
         # percent high
         percent_high = self.BGpercentHigh(specific_date, time_frame)
         percent_high = str(round(percent_high, 1))
-        print("\nPercent high: ", percent_high, "%")
+        output.append(f"\nPercent high: {percent_high}%")
 
         # percent low
         percent_low = self.BGpercentLow(specific_date, time_frame)
         percent_low = str(round(percent_low, 1))
-        print("\nPercent low: ", percent_low, "%")
-
-        #print("\nNumber of corrections: ", numCorrections)
+        output.append(f"\nPercent low: {percent_low}%")
 
         calcedNighttimeBasal = self.checkNighttimeBasal(specific_date)
-
         morningSpike = self.checkDawnPhenonmenon(specific_date)
-
         carbRatioAdjustments = self.checkCarbRatio(specific_date)
 
-        print("\nCalculated nighttime basal: ", calcedNighttimeBasal)
-        print("\nCalculated daytime basal: ", morningSpike)
-        print("\nCarb Ratio Adjustments : ", carbRatioAdjustments)
-        print("\n")
+        output.append(f"\nCalculated nighttime basal: {calcedNighttimeBasal}")
+        output.append(f"\nCalculated daytime basal: {morningSpike}")
+        output.append(f"\nCarb Ratio Adjustments: {carbRatioAdjustments}")
+
+        return "\n".join(output)
+
 
 
 data_analyzer = DataAnalyzer()

@@ -1,2 +1,0 @@
-current issue:
-install pandas, will need for future
