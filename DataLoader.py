@@ -313,9 +313,8 @@ IGNORE ABOVE METHOD CALLS
 #print(morningBg)
 #print(nighttimeBg)
 
-'''
+
 bgPast3Days = data_loader.getPast3DaysBg("2024-11-18")
 print(bgPast3Days)
 insulinPast3Days = data_loader.getPast3DaysInsulin("2024-11-18")
 print(insulinPast3Days)
-'''

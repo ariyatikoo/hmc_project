@@ -284,6 +284,6 @@ class DataAnalyzer(DataLoader):
 
 data_analyzer = DataAnalyzer()
 
-summary = data_analyzer.Summary('2024-11-18', '1 day')
+summary = data_analyzer.Summary('2024-11-10', '1 day')
 
 
