@@ -136,16 +136,16 @@ class DataAnalyzer(DataLoader):
         # Determine basal adjustments
         if nighttime_mean > 110:
             if nighttime_mean > 130:
-                return "Increase basal during 11pm to 5am by 0.15"
+                return "Increase basal during 11pm to 5am by 15%"
             if nighttime_mean > 150:
-                return "Increase basal during 11pm to 5am by 0.2"
+                return "Increase basal during 11pm to 5am by 20%"
             if nighttime_mean > 170:
-                return "Increase basal during 11pm to 5am by 0.25"
+                return "Increase basal during 11pm to 5am by 25%"
             if nighttime_mean > 190:
-                return "Increase basal during 11pm to 5am by 0.3"
-            return "Increase basal during 11pm to 5am by 0.1"
+                return "Increase basal during 11pm to 5am by 30%"
+            return "Increase basal during 11pm to 5am by 10%"
         elif nighttime_mean < 80 and nighttime_median < 80:
-            return "Decrease basal during 11pm to 5am by 0.1"
+            return "Decrease basal during 11pm to 5am by 10%"
         return "No changes needed."
 
     def checkDawnPhenonmenon(self, specific_date):
@@ -163,12 +163,12 @@ class DataAnalyzer(DataLoader):
         # Determine basal adjustments
         if morning_mean > 140:
             if morning_mean > 160:
-                return "Increase basal during 5am to 7am by 0.2"
+                return "Increase basal during 5am to 7am by 20%"
             if morning_mean > 180:
-                return "Increase basal during 5am to 7am by 0.3"
+                return "Increase basal during 5am to 7am by 30%"
             if morning_mean > 200:
-                return "Increase basal during 5am to 7am by 0.4"
-            return "Increase basal during 5am to 7am by 0.1"
+                return "Increase basal during 5am to 7am by 40%"
+            return "Increase basal during 5am to 7am by 10%"
 
         return "No changes needed."
 
@@ -227,9 +227,9 @@ class DataAnalyzer(DataLoader):
 
         # 4. Adjust Carb Ratio
         if (high_tally -3)> low_tally: # -1 because we don't want to make changes because of just 1 instance
-            return "Decrease carb ratio value by 1 (more insulin)"
+            return "Decrease carb ratio value by 10% (more insulin)"
         elif (low_tally -1) > high_tally:
-            return "Increase carb ratio value by 1 (less insulin)"
+            return "Increase carb ratio value by 10% (less insulin)"
         else:
             return "No changes needed"
         
