@@ -2,7 +2,7 @@ import csv
 import datetime
 import pandas as pd
 
-pd.set_option('display.max_rows', None)
+#pd.set_option('display.max_rows', None)
 
 
 class DataLoader:
@@ -179,55 +179,48 @@ class DataLoader:
             return None
     
     
-    def getNighttimeBg(self, specific_date) :
+
+
+    def getNighttimeBg(self, specific_date):
         if self.bg is None:
             print("BG data has not been loaded. Please call getBGDict first.")
             return None
 
         try:
-            # Ensure BG data is loaded first
             self.getBGDict()
-
-            # Convert the specific date into a datetime object
             specific_datetime = datetime.datetime.strptime(specific_date, "%Y-%m-%d")
 
-            # Create a list to store results for 3 nights (specific_date and 2 prior days)
             results = []
 
-            # Loop over the specified date and the three days before
             for days_before in range(3):
                 current_date = specific_datetime - datetime.timedelta(days=days_before)
 
-                # Define the start time (11 PM the previous day) and end time (5 AM the current day)
-                start_time = current_date - datetime.timedelta(days=1) + datetime.timedelta(hours=23)
-                end_time = current_date + datetime.timedelta(hours=5)
 
-                # Get BG table
+                start_time = current_date.replace(hour=23, minute=0, second=0) - datetime.timedelta(days=1)
+                end_time = current_date.replace(hour=5, minute=0, second=0)
+
                 bg_table = self.getBGTable()
 
-                # Ensure EventDateTime column is in datetime format
                 if 'EventDateTime' in bg_table.columns:
                     bg_table['EventDateTime'] = pd.to_datetime(bg_table['EventDateTime'])
                 else:
                     print("Error: 'EventDateTime' column not found in the BG table.")
                     return None
 
-                # Filter the data within the time range
                 filtered_data = bg_table[
                     (bg_table['EventDateTime'] >= start_time) &
                     (bg_table['EventDateTime'] <= end_time)
                 ]
 
-                # Append filtered data for the current night to the results list
                 results.append(filtered_data)
 
-            # Concatenate results for all 3 nights into a single DataFrame
             final_results = pd.concat(results, ignore_index=True)
             return final_results
 
         except Exception as e:
             print(f"Error: {e}")
             return None
+
 
        
         
@@ -290,31 +283,27 @@ bg = data_loader.getBGDict()
 bgTable = data_loader.getBGTable()
 insulin = data_loader.getInsulinDict()
 insulinTable = data_loader.getInsulinTable()
-nighttimeBg = data_loader.getNighttimeBg("2024-11-18")
-morningBg = data_loader.getMorningBg("2024-11-18")
 
-# Retrieve BG and Insulin data for a specific day
-bgDayOne = data_loader.getBGforOneDay("2024-11-18")
-#print(bgDayOne)
+print("\nBlood Glucose Data for November 18th, 2024:\n")
+bgOneDay = data_loader.getBGforOneDay("2024-11-18")
+print(bgOneDay)
 
-insulinDayOne = data_loader.getInsulinforOneDay("2024-11-18")
-#print(insulinDayOne)
+print("\nInsulin Data for November 18th, 2024:\n")
+insulinOneDay = data_loader.getInsulinforOneDay("2024-11-18")
+print(insulinOneDay)
 
-'''
-IGNORE ABOVE METHOD CALLS
-'''
-
-# gets bg and insulin data for past 2 days plus the day passed through
-
-
-#print(bgTable)
-#print(insulinTable)
-
-#print(morningBg)
-#print(nighttimeBg)
-
-
+print("\nBlood Glucose Data for November 16-18, 2024:\n")
 bgPast3Days = data_loader.getPast3DaysBg("2024-11-18")
 print(bgPast3Days)
+
+print("\nInsulin Data for November 16-18, 2024:\n")
 insulinPast3Days = data_loader.getPast3DaysInsulin("2024-11-18")
 print(insulinPast3Days)
+
+print("\nOvernight Blood Glucose Data for November 17-18, 2024:\n")
+nighttimeBg = data_loader.getNighttimeBg("2024-11-18")
+print(nighttimeBg)
+
+print("\nMorning Blood Glucose Data for November 18th, 2024:\n")
+morningBg = data_loader.getMorningBg("2024-11-18")
+print(morningBg)

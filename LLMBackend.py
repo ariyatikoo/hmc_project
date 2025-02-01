@@ -9,7 +9,7 @@ class LLMBackend(DataAnalyzer):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     model = "gpt-4"
     
-    def __init__(self, specific_date='2024-11-10', time_frame='1 day'):
+    def __init__(self, specific_date='2024-11-18', time_frame='1 day'):
         super().__init__()
         data_analyzer = DataAnalyzer()
         self.summary = data_analyzer.Summary(specific_date, time_frame)
@@ -33,7 +33,10 @@ class LLMBackend(DataAnalyzer):
                     "You are an assistant for someone with type 1 diabetes. "
                     "You will receive data analytics about the user's blood glucose and insulin delivery data. "
                     "Your job is to explain the analytics to the user in a way that is easier for them to understand, "
-                    "and to answer their questions about it. Here is the user's data:\n\n" + self.summary
+                    "and to answer their questions about it." 
+                    "You must provide a disclaimer to the user" 
+                    "and encourage them to consider these changes before executing them and/or consult a medical professional."
+                    "Here is the user's data:\n\n" + self.summary
                 )
             }
         ]
