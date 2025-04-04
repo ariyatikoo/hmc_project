@@ -1,90 +1,188 @@
 from datetime import datetime, timedelta
 from Patient import Patient
+# datetime --> time = datetime.now(), time.hour
+
+'''
+
+1. the storage loop we had discucssed briefly a couple weeks ago
+2. how to store the sim data in a csv file (is this a simple process or will it require a meeting?)
+
+'''
 
 class DiabetesSimulator:
     
-    def __init__(self, patient: Patient, starting_glucose: float = 110):
+    def __init__(self, patient: Patient, starting_bg: float = 110.0, starting_insulin: float = 0, starting_glucose =0):
         self.patient = patient
-        self.current_glucose = starting_glucose
 
-        self.active_basal = [] # contains basal history
-        self.meal_history = [] # list of all meals eaten
-        self.active_carbs = [] # stores current active carbs
-        self.active_bolus = [] # stores current active bolus (assume works in tandem with active_carbs)
-
-        self.glucose_history = [starting_glucose]
+        # time
         self.start_time = datetime.now()
         self.current_time = self.start_time
-
-    def simulate(self, days=14, timesteps=5):
-        total_steps = days * 24 * 60 // timesteps 
-
-        for _ in range(total_steps):
-            basal_in_five_mins = self.patient.basal_rate / 12
-            self.active_basal.append(basal_in_five_mins)
-
-            previous_glucose = self.glucose_history[-1]
-            glucose_change = 0
-
-            for basal in self.active_basal:
-                glucose_change -= basal  
-            
-            for carbs in self.active_carbs:
-                glucose_change += carbs  # naive approach: update glucose change based on how much would increase in 5 min timesteps, 
-                #based on carbs eaten, distribute across 5 hrs
-            
-            for bolus in self.active_bolus:
-                glucose_change -= bolus # hypothetically, cancels out all glucose increases from carb consumption 
-            
-
-            new_glucose = previous_glucose + glucose_change
-            self.glucose_history.append(new_glucose)
-        
-            self.current_time = self.current_time + timedelta(minutes=5)
-    
-    def refresh(self):
-
-        # N(t) = Nnull (0.5)^(t/81), where N is amount of insulin remaining, Nnull is amount of initial insulin, t is time passed
-        # if final N is less than = 0.1 or small carb value, delete meal instance
-
-        '''
-        same for carbs, just not same half life value
-        incorporate randomness in glycemic index values
-
-        update active_insulin and active_meal
-
-        1. we use half life function to determine how much insulin/carb remaining in 5 minutes
-        2. subtract from how much currently remaining, shows how much glucose will change in 5 mins
-
-        '''
-
-        # carbs
-        initial_carbs = 0
-        t = self.current_time
-        half_life = 1 # substitute in for actual half life of carbs
-        final_carbs = initial_carbs * pow(0.5, (t/half_life))
-
-        oldest_carbs = self.active_carbs[0]
-
-        if (final_carbs <= 0.1) :
-            self.active_carbs.remove(oldest_carbs) # remove oldest value in active_carbs once insulin is minimal
-
         # insulin
-        initial_insulin = 0
+        self.current_insulin = starting_insulin
+
+        # glucose 
+        self.current_glucose = starting_glucose
+
+        # bg
+        self.current_bg = starting_bg
+
+        # each time corresponds to all the glucose and insulin that occured between that time and 5 mins later, and then the final bg reading
+        self.diabetes_dict = {self.current_time : [self.current_insulin, self.current_glucose, self.current_bg]} 
+        # format- {time: insulin, liver glucose, blood glucose}
+
+
+    def run_simulation(self, days=14, five_min_interval=5):
+        steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
+        steps = 288 # one day worth of steps
+        delta = timedelta(minutes=5)
+
+       # current issues
+        '''
+        1. problem with meals, calls glucose spike for each time in that hour
+        2. meal delivers less insulin if low bg
+        3. adds carbs to 15 if low 
+        '''
+       
+        b_day = 0
+        l_day = 0
+        d_day = 0
+        bg = self.current_bg
+        for _ in range(steps):
+
+            if bg < 70:
+                glucose = 15
+                insulin = 0
+                
+            
+            elif bg > 250:
+                glucose = 0
+                
+                
+
+            else:           
+                insulin = self.basal() 
+                glucose = self.glucose_secretion() 
+
+                # meals
+                meal_insulin = 0
+                carbs = 0
+
+                if self.current_time.hour == 7 and self.current_time.day != b_day:
+                    meal_insulin, carbs = self.addMealEvent('breakfast', bg, insulin)
+                    b_day = self.current_time.day
+
+                if self.current_time.hour == 12 and self.current_time.day != l_day:
+                    meal_insulin, carbs = self.addMealEvent('lunch', bg, insulin)
+                    l_day = self.current_time.day
+
+                if self.current_time.hour == 19 and self.current_time.day != d_day:
+                    meal_insulin, carbs = self.addMealEvent('dinner', bg, insulin)
+                    d_day = self.current_time.day
+
+                insulin += meal_insulin
+                glucose += carbs
+
+            bg = self.update_bg() 
+
+            self.current_time += delta
+
+            insulin += self.auto_correction(bg)
+
+            bg = round(bg, 0)
+            insulin =  round(insulin, 0)
+            glucose = round(glucose, 0)
+                
+            self.diabetes_dict.update({self.current_time: [insulin, glucose, bg]})
+
+        for k, v in self.diabetes_dict.items():
+            print(k, v)     
+
+      # helper methods just meant to update lists and preserve history
+    def glucose_secretion(self):
+        return (self.patient.basal_rate/12)*self.patient.carb_ratio # allows for proper glucose units
+    
+    
+    def basal(self):   
+        return (self.patient.basal_rate / 12)
+    
+    def auto_correction(self, bg):
+        for t, data in self.diabetes_dict.items():
+            if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                continue
+            active_insulin = data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+
+        if bg > 110:      
+            return (max(0, ((bg  - 110)/self.patient.correction_factor) - active_insulin))
+        else:
+            return 0
         
-        final_insulin = initial_insulin * pow(0.5, (t/81))
+    
+    def addMealEvent(self, meal_type, bg, insulin):
+        if (meal_type == 'breakfast') :
+            carbs = 30
+        if (meal_type == 'lunch'):
+            carbs = 50
+        if (meal_type == 'dinner'):
+            carbs = 70
+       
+        
+        meal_insulin = carbs/self.patient.carb_ratio
 
-        oldest_insulin = self.active_bolus[0]
+        for t, data in self.diabetes_dict.items():
+            if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                continue
+            active_insulin =  data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
 
-        if (final_insulin <= 0.1) :
-            self.active_bolus.remove(oldest_insulin) 
+        insulin_reduction = ((110-bg)/self.patient.correction_factor) + active_insulin # insulin is IOB
+        #correction =  max(0, (((bg-110)/self.patient.correction_factor) - active_insulin))
+
+        if (bg < 110) :
+            meal_insulin = meal_insulin - max(0, insulin_reduction)
+        '''
+        if (bg > 110) :
+            meal_insulin = meal_insulin + correction'
+        '''
+        
+        return meal_insulin, carbs
+    
+    
+   
+    # updating methods
+   
+    def update_bg(self):
+        current_bg = self.diabetes_dict[self.current_time][2]
+        future = self.current_time + timedelta(minutes=5)
+
+        for t, data in self.diabetes_dict.items():
+            if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                continue
+            active_insulin = self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) - self.insulin_decay(data[0], t.timestamp(), future.timestamp())
+            active_glucose = self.glucose_decay(data[1], t.timestamp(), self.current_time.timestamp()) - self.glucose_decay(data[1], t.timestamp(), future.timestamp())
+           
+            current_bg -= active_insulin * self.patient.correction_factor
+            current_bg += (active_glucose/self.patient.carb_ratio) * self.patient.correction_factor 
 
        
-       
 
-        # delete meal history and active insulin older than 5 hrs
+        return current_bg
+      
+    def insulin_decay(self, current_insulin, t0, t1):
+        elapsed_time = t1 - t0
+        elapsed_time = elapsed_time/60 # check later
+        half_life = 81 # in minutes
+        current_insulin = current_insulin * pow(0.5, (elapsed_time/half_life))
 
-    # calc_insulin_impact  --> combine each impact
-    # calc_meal_impact
+        return current_insulin
+    
+    def glucose_decay(self, current_glucose, t0, t1):
+        elapsed_time = t1 - t0
+        elapsed_time = elapsed_time/60 # check later
+        half_life = 14.3 # minutes
+        current_glucose = current_glucose * pow(0.5, (elapsed_time/half_life))
 
-# can edit to include bolus, meal management, and insulin decay
+        return current_glucose
+
+
+
+
+ 

@@ -1,28 +1,30 @@
 # author name: Ariya F Tikoo
 
-
+# fix dataLoader imported methods
 import pandas as pd
 import sys
 from datetime import datetime, timedelta
 sys.path.append('/Users/aft/VisualStudioCodeWorkspace/Python')
-from hmc_project.DataLoader import DataLoader # type: ignore
+from DataLoader import DataLoader
 
 
-class DataAnalyzer(DataLoader):
+
+class DataAnalyzer:
 
     def __init__(self):
         super().__init__()
         self.summary = "generated from data analyzer"
-    
+        self.dataLoader = DataLoader()
+
     def calcBGmean(self, specified_date, time_frame):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
         
         if time_frame == '1 day':
-            bg_table = self.getBGforOneDay(specified_date)
+            bg_table = self.dataLoader.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
-            bg_table = self.getPast3DaysBg(specified_date)
+            bg_table = self.dataLoader.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
-            bg_table = self.getBGTable()
+            bg_table = self.dataLoader.getBGTable()
         else:
             raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
         
@@ -32,14 +34,14 @@ class DataAnalyzer(DataLoader):
        
     
     def calcBGmedian(self, specified_date, time_frame):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
         
         if time_frame == '1 day':
-            bg_table = self.getBGforOneDay(specified_date)
+            bg_table = self.dataLoader.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
-            bg_table = self.getPast3DaysBg(specified_date)
+            bg_table = self.dataLoader.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
-            bg_table = self.getBGTable()
+            bg_table = self.dataLoader.getBGTable()
         else:
             raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
         
@@ -49,13 +51,13 @@ class DataAnalyzer(DataLoader):
     
     
     def BGtimeInRange(self, specified_date, time_frame, lower_bound=75, upper_bound=135):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
         if time_frame == '1 day':
-            bg_table = self.getBGforOneDay(specified_date)
+            bg_table = self.dataLoader.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
-            bg_table = self.getPast3DaysBg(specified_date)
+            bg_table = self.dataLoader.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
-            bg_table = self.getBGTable()
+            bg_table = self.dataLoader.getBGTable()
         else:
             raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
@@ -69,14 +71,14 @@ class DataAnalyzer(DataLoader):
 
     
     def BGpercentHigh(self, specified_date, time_frame, high_bound=180):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
         
         if time_frame == '1 day':
-            bg_table = self.getBGforOneDay(specified_date)
+            bg_table = self.dataLoader.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
-            bg_table = self.getPast3DaysBg(specified_date)
+            bg_table = self.dataLoader.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
-            bg_table = self.getBGTable()
+            bg_table = self.dataLoader.getBGTable()
         else:
             raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
@@ -88,14 +90,14 @@ class DataAnalyzer(DataLoader):
         return (len(high_values) / len(column_data)) * 100
     
     def BGpercentLow(self, specified_date, time_frame, low_bound=75):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
         
         if time_frame == '1 day':
-            bg_table = self.getBGforOneDay(specified_date)
+            bg_table = self.dataLoader.getBGforOneDay(specified_date)
         elif time_frame == '3 days':
-            bg_table = self.getPast3DaysBg(specified_date)
+            bg_table = self.dataLoader.getPast3DaysBg(specified_date)
         elif time_frame == '2 weeks':
-            bg_table = self.getBGTable()
+            bg_table = self.dataLoader.getBGTable()
         else:
             raise ValueError("Choose '1 day', '3 days', or '2 weeks'.")
 
@@ -107,7 +109,7 @@ class DataAnalyzer(DataLoader):
         return (len(low_values) / len(column_data)) * 100
     
     def getNumCorrections(self, column1_name='CorrectionDelivered', column2_name='InsulinDelivered', column3_name='FoodDelivered'):
-        insulin_table = self.getInsulinTable()
+        insulin_table = self.dataLoader.getInsulinTable()
         
         num_control_iq = (insulin_table[column1_name] != 0).sum()
         manual_corrections = ((insulin_table[column1_name] == 0) &
@@ -117,9 +119,9 @@ class DataAnalyzer(DataLoader):
     
    
     def checkNighttimeBasal(self, specific_date):
-        self.getBGDict()
+        self.dataLoader.getBGDict()
 
-        nighttime_data = self.getNighttimeBg(specific_date)  
+        nighttime_data = self.dataLoader.getNighttimeBg(specific_date)  
 
         # Calculate stats
         nighttime_mean = nighttime_data['Readings (mg/dL)'].mean()
@@ -149,8 +151,8 @@ class DataAnalyzer(DataLoader):
         return "No changes needed."
 
     def checkDawnPhenonmenon(self, specific_date):
-        self.getBGDict()
-        morning_data = self.getMorningBg(specific_date) 
+        self.dataLoader.getBGDict()
+        morning_data = self.dataLoader.getMorningBg(specific_date) 
         
         if morning_data.empty:
             return "No morning data available for analysis."
@@ -181,10 +183,10 @@ class DataAnalyzer(DataLoader):
         """
 
         # 1. Fetch BG and Insulin Data as DataFrames
-        self.getBGDict()
-        self.getInsulinDict()
-        bg = self.getPast3DaysBg(specific_date)  
-        insulin = self.getPast3DaysInsulin(specific_date)  
+        self.dataLoader.getBGDict()
+        self.dataLoader.getInsulinDict()
+        bg = self.dataLoader.getPast3DaysBg(specific_date)  
+        insulin = self.dataLoader.getPast3DaysInsulin(specific_date)  
 
         # Convert date columns to datetime
         bg['EventDateTime'] = pd.to_datetime(bg['EventDateTime'])
