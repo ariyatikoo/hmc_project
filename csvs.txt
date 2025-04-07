@@ -1,0 +1,15 @@
+column_headers = ["EventDateTime",...] # these are the column names 
+ 
+timestamps = list(self.diabetes_dict.keys())
+timestamps, ins, glu, bgs = [], [], [], []
+for k,v in self.diabetes_dict.items():
+    timestamps.append(k)
+    ins.append(v[0])
+    glu.append(v[1])
+    bgs.append(v[2])
+ 
+with open("data.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(column_headers)
+    for a, b, c, d in zip(timestamps, ins, glu, bgs):
+        writer.writerow([a, b, c, d])

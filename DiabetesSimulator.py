@@ -1,13 +1,6 @@
 from datetime import datetime, timedelta
 from Patient import Patient
-# datetime --> time = datetime.now(), time.hour
-
-'''
-
-1. the storage loop we had discucssed briefly a couple weeks ago
-2. how to store the sim data in a csv file (is this a simple process or will it require a meeting?)
-
-'''
+import matplotlib.pyplot as plt
 
 class DiabetesSimulator:
     
@@ -15,7 +8,7 @@ class DiabetesSimulator:
         self.patient = patient
 
         # time
-        self.start_time = datetime.now()
+        self.start_time = datetime(2025,1,1,0,0)
         self.current_time = self.start_time
         # insulin
         self.current_insulin = starting_insulin
@@ -32,16 +25,15 @@ class DiabetesSimulator:
 
 
     def run_simulation(self, days=14, five_min_interval=5):
-        steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
-        steps = 288 # one day worth of steps
-        delta = timedelta(minutes=5)
 
-       # current issues
-        '''
-        1. problem with meals, calls glucose spike for each time in that hour
-        2. meal delivers less insulin if low bg
-        3. adds carbs to 15 if low 
-        '''
+        IOB = []
+        GOB = []
+        bg_arr = []
+      
+
+        steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
+        #steps = 288 # one day worth of steps
+        delta = timedelta(minutes=5)
        
         b_day = 0
         l_day = 0
@@ -49,8 +41,9 @@ class DiabetesSimulator:
         bg = self.current_bg
         for _ in range(steps):
 
-            if bg < 70:
-                glucose = 15
+            
+            if bg < 80:
+                glucose = 20
                 insulin = 0
                 
             
@@ -89,10 +82,50 @@ class DiabetesSimulator:
             insulin += self.auto_correction(bg)
 
             bg = round(bg, 0)
+            bg_arr.append(bg)
             insulin =  round(insulin, 0)
             glucose = round(glucose, 0)
                 
             self.diabetes_dict.update({self.current_time: [insulin, glucose, bg]})
+
+            active_insulin = 0
+            active_glucose = 0
+
+            for t, data in self.diabetes_dict.items():
+                if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                    continue
+                active_insulin += data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+            
+            for t, data in self.diabetes_dict.items():
+                if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                    continue
+                active_glucose += data[1] - self.glucose_decay(data[1], t.timestamp(), self.current_time.timestamp()) 
+
+            IOB.append(active_insulin)
+            GOB.append(active_glucose)
+
+            
+                
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+ 
+        ax1.plot(IOB)
+        ax1.set_xlabel("Timesteps")
+        ax1.set_ylabel("Active Insulin")
+        ax1.set_title("Insulin on board over time")
+        
+        ax2.plot(GOB)
+        ax2.set_xlabel("Timesteps")
+        ax2.set_ylabel("Active Glucose")
+        ax2.set_title("Glucose on board over time")
+
+        ax3.plot(bg_arr)
+        ax3.set_xlabel("Timesteps")
+        ax3.set_ylabel("BG")
+        ax3.set_title("Blood Glucose")
+        
+        plt.tight_layout()
+        
+        plt.show()
 
         for k, v in self.diabetes_dict.items():
             print(k, v)     
@@ -106,10 +139,12 @@ class DiabetesSimulator:
         return (self.patient.basal_rate / 12)
     
     def auto_correction(self, bg):
+        active_insulin = 0
         for t, data in self.diabetes_dict.items():
             if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
                 continue
-            active_insulin = data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+            active_insulin += data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+            
 
         if bg > 110:      
             return (max(0, ((bg  - 110)/self.patient.correction_factor) - active_insulin))
@@ -128,10 +163,12 @@ class DiabetesSimulator:
         
         meal_insulin = carbs/self.patient.carb_ratio
 
+        active_insulin = 0
+
         for t, data in self.diabetes_dict.items():
             if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
                 continue
-            active_insulin =  data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+            active_insulin +=  data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
 
         insulin_reduction = ((110-bg)/self.patient.correction_factor) + active_insulin # insulin is IOB
         #correction =  max(0, (((bg-110)/self.patient.correction_factor) - active_insulin))
@@ -140,7 +177,7 @@ class DiabetesSimulator:
             meal_insulin = meal_insulin - max(0, insulin_reduction)
         '''
         if (bg > 110) :
-            meal_insulin = meal_insulin + correction'
+            meal_insulin = meal_insulin + correction
         '''
         
         return meal_insulin, carbs
