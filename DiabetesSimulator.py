@@ -32,7 +32,7 @@ class DiabetesSimulator:
       
 
         steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
-        #steps = 288 # one day worth of steps
+        steps = 288 # one day worth of steps
         delta = timedelta(minutes=5)
        
         b_day = 0
@@ -105,27 +105,7 @@ class DiabetesSimulator:
             GOB.append(active_glucose)
 
             
-                
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
- 
-        ax1.plot(IOB)
-        ax1.set_xlabel("Timesteps")
-        ax1.set_ylabel("Active Insulin")
-        ax1.set_title("Insulin on board over time")
-        
-        ax2.plot(GOB)
-        ax2.set_xlabel("Timesteps")
-        ax2.set_ylabel("Active Glucose")
-        ax2.set_title("Glucose on board over time")
-
-        ax3.plot(bg_arr)
-        ax3.set_xlabel("Timesteps")
-        ax3.set_ylabel("BG")
-        ax3.set_title("Blood Glucose")
-        
-        plt.tight_layout()
-        
-        plt.show()
+    
 
         for k, v in self.diabetes_dict.items():
             print(k, v)     
@@ -203,7 +183,7 @@ class DiabetesSimulator:
 
         return current_bg
       
-    def insulin_decay(self, current_insulin, t0, t1):
+    def I(self, current_insulin, t0, t1):
         elapsed_time = t1 - t0
         elapsed_time = elapsed_time/60 # check later
         half_life = 81 # in minutes
