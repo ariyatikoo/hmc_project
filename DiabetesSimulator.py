@@ -1,6 +1,14 @@
 from datetime import datetime, timedelta
 from Patient import Patient
 import matplotlib.pyplot as plt
+import random
+
+'''
+where to introduce variance?
+with gut glucose - maybe not
+meal carbs
+breakfast/dinner/lunch range, 15 to 90 grams of carbs for different people(create different patient profiles)
+'''
 
 class DiabetesSimulator:
     
@@ -32,18 +40,19 @@ class DiabetesSimulator:
       
 
         steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
-        steps = 288 # one day worth of steps
+        #steps = 288 # one day worth of steps
         delta = timedelta(minutes=5)
        
         b_day = 0
         l_day = 0
         d_day = 0
         bg = self.current_bg
+        last_correction = self.current_time
         for _ in range(steps):
 
             
-            if bg < 80:
-                glucose = 20
+            if (bg < 80 ):
+                glucose = 15
                 insulin = 0
                 
             
@@ -79,12 +88,14 @@ class DiabetesSimulator:
 
             self.current_time += delta
 
-            insulin += self.auto_correction(bg)
+            if (self.current_time - last_correction).seconds/3600 > 1 :
+                insulin += self.auto_correction(bg)
+                last_correction = self.current_time     
 
             bg = round(bg, 0)
             bg_arr.append(bg)
-            insulin =  round(insulin, 0)
-            glucose = round(glucose, 0)
+            insulin =  round(insulin, 3)
+            glucose = round(glucose, 3)
                 
             self.diabetes_dict.update({self.current_time: [insulin, glucose, bg]})
 
@@ -105,31 +116,41 @@ class DiabetesSimulator:
             GOB.append(active_glucose)
 
             
-    
+       
 
         for k, v in self.diabetes_dict.items():
             print(k, v)     
 
       # helper methods just meant to update lists and preserve history
     def glucose_secretion(self):
-        return (self.patient.basal_rate/12)*self.patient.carb_ratio # allows for proper glucose units
+        return (self.patient.basal_rate/12)
     
     
-    def basal(self):   
+    def basal(self): 
         return (self.patient.basal_rate / 12)
     
-    def auto_correction(self, bg):
-        active_insulin = 0
-        for t, data in self.diabetes_dict.items():
-            if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
-                continue
-            active_insulin += data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
-            
+    '''
+    MAIN ISSUE
+    corrections are continually generated while bg is still high -- leads to 10+ units correction which leads to negative bg
+    solutions: time variable implemented, so for 1 hour after correction given, no more corrections
+    question: is the active_insulin working properly? I commented out all active_insulin references and the same values are generated
+    '''
 
-        if bg > 110:      
-            return (max(0, ((bg  - 110)/self.patient.correction_factor) - active_insulin))
-        else:
-            return 0
+    def auto_correction(self, bg):
+            
+            active_insulin = 0
+            for t, data in self.diabetes_dict.items():
+                if ((self.current_time.timestamp() - t.timestamp())/3600 > 5):
+                    continue
+                active_insulin += data[0] - self.insulin_decay(data[0], t.timestamp(), self.current_time.timestamp()) 
+                
+            correction = (max(0, ((bg  - 110)/self.patient.correction_factor) - active_insulin))
+        
+            if bg > 180:  
+                return correction
+            
+            else:
+                return 0
         
     
     def addMealEvent(self, meal_type, bg, insulin):
@@ -155,6 +176,9 @@ class DiabetesSimulator:
 
         if (bg < 110) :
             meal_insulin = meal_insulin - max(0, insulin_reduction)
+        
+        if (meal_insulin <0) :
+            meal_insulin = 0
         '''
         if (bg > 110) :
             meal_insulin = meal_insulin + correction
@@ -183,8 +207,8 @@ class DiabetesSimulator:
 
         return current_bg
       
-    def I(self, current_insulin, t0, t1):
-        elapsed_time = t1 - t0
+    def insulin_decay(self, current_insulin, t0, t1):
+        elapsed_time = (t1 - t0)
         elapsed_time = elapsed_time/60 # check later
         half_life = 81 # in minutes
         current_insulin = current_insulin * pow(0.5, (elapsed_time/half_life))
@@ -192,9 +216,9 @@ class DiabetesSimulator:
         return current_insulin
     
     def glucose_decay(self, current_glucose, t0, t1):
-        elapsed_time = t1 - t0
+        elapsed_time = (t1 - t0)
         elapsed_time = elapsed_time/60 # check later
-        half_life = 14.3 # minutes
+        half_life = 50 # minutes
         current_glucose = current_glucose * pow(0.5, (elapsed_time/half_life))
 
         return current_glucose
