@@ -10,7 +10,7 @@ class LLMBackend(DataAnalyzer):
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     model = "gpt-4"
     
-    def __init__(self, user_id, specific_date='2024-11-18', time_frame='1 day'):
+    def __init__(self, user_id, specific_date='2025-01-01', time_frame='1 day'):
         super().__init__()
         self.user_id = user_id
         data_analyzer = DataAnalyzer()

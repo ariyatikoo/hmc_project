@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from Patient import Patient
 import matplotlib.pyplot as plt
 import random
+import csv
 
 '''
 where to introduce variance?
@@ -40,7 +41,7 @@ class DiabetesSimulator:
       
 
         steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
-        #steps = 288 # one day worth of steps
+        steps = 288 # one day worth of steps
         delta = timedelta(minutes=5)
        
         b_day = 0
@@ -50,12 +51,16 @@ class DiabetesSimulator:
         last_correction = self.current_time
         for _ in range(steps):
 
+            if (bg < 40):
+                bg = 70
             
             if (bg < 80 ):
                 glucose = 15
                 insulin = 0
                 
-            
+            elif bg > 320:
+                bg = 290
+                
             elif bg > 250:
                 glucose = 0
                 
@@ -84,9 +89,7 @@ class DiabetesSimulator:
                 insulin += meal_insulin
                 glucose += carbs
 
-            bg = self.update_bg() 
-
-            self.current_time += delta
+           
 
             if (self.current_time - last_correction).seconds/3600 > 1 :
                 insulin += self.auto_correction(bg)
@@ -98,6 +101,9 @@ class DiabetesSimulator:
             glucose = round(glucose, 3)
                 
             self.diabetes_dict.update({self.current_time: [insulin, glucose, bg]})
+
+            bg = self.update_bg() 
+            self.current_time += delta
 
             active_insulin = 0
             active_glucose = 0
@@ -119,7 +125,32 @@ class DiabetesSimulator:
        
 
         for k, v in self.diabetes_dict.items():
-            print(k, v)     
+            print(k, v)  
+
+    def writeCSV(self, bg_file_name, insulin_file_name):
+        cgm_headers = ["EventDateTime", "Readings (mg/dL)"]
+        pump_headers = ["CompletionDateTime", "BG (mg/dL)", "InsulinDelivered", "CarbSize"]
+
+        cgm_rows = []
+        pump_rows = []
+
+        for k, v in self.diabetes_dict.items():
+            cgm_rows.append([k, v[2]])
+            pump_rows.append([k, v[2], v[0], v[1]])
+        
+        with open(bg_file_name, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(cgm_headers)
+            for row in cgm_rows:
+                writer.writerow(row)
+ 
+        with open(insulin_file_name, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(pump_headers)
+            for row in pump_rows:
+                writer.writerow(row)
+        
+
 
       # helper methods just meant to update lists and preserve history
     def glucose_secretion(self):
@@ -129,13 +160,7 @@ class DiabetesSimulator:
     def basal(self): 
         return (self.patient.basal_rate / 12)
     
-    '''
-    MAIN ISSUE
-    corrections are continually generated while bg is still high -- leads to 10+ units correction which leads to negative bg
-    solutions: time variable implemented, so for 1 hour after correction given, no more corrections
-    question: is the active_insulin working properly? I commented out all active_insulin references and the same values are generated
-    '''
-
+   
     def auto_correction(self, bg):
             
             active_insulin = 0
@@ -155,11 +180,11 @@ class DiabetesSimulator:
     
     def addMealEvent(self, meal_type, bg, insulin):
         if (meal_type == 'breakfast') :
-            carbs = 30
+            carbs = self.patient.breakfast_getter()
         if (meal_type == 'lunch'):
-            carbs = 50
+            carbs = self.patient.lunch_getter()
         if (meal_type == 'dinner'):
-            carbs = 70
+            carbs = self.patient.dinner_getter()
        
         
         meal_insulin = carbs/self.patient.carb_ratio
@@ -209,16 +234,16 @@ class DiabetesSimulator:
       
     def insulin_decay(self, current_insulin, t0, t1):
         elapsed_time = (t1 - t0)
-        elapsed_time = elapsed_time/60 # check later
-        half_life = 81 # in minutes
+        elapsed_time = elapsed_time/60
+        half_life = random.gauss(81,8) # in minutes
         current_insulin = current_insulin * pow(0.5, (elapsed_time/half_life))
 
         return current_insulin
     
     def glucose_decay(self, current_glucose, t0, t1):
         elapsed_time = (t1 - t0)
-        elapsed_time = elapsed_time/60 # check later
-        half_life = 50 # minutes
+        elapsed_time = elapsed_time/60 
+        half_life = random.gauss(50,5) # minutes
         current_glucose = current_glucose * pow(0.5, (elapsed_time/half_life))
 
         return current_glucose

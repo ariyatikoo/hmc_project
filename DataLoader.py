@@ -16,7 +16,7 @@ class DataLoader:
 
     # Create dictionaries from CSV files
     def getBGDict(self):
-        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/BGDataNov14.csv', 'r') as f:
+        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile.csv', 'r') as f:
             dict_reader = csv.DictReader(f)
             self.bg = {}  # Initialize bg dictionary
 
@@ -28,7 +28,7 @@ class DataLoader:
             return self.bg
         
     def getInsulinDict(self):
-        with open('/Users/aft/Downloads/Fixed Ariya Insulin data.csv', 'r') as f:
+        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile.csv', 'r') as f:
             dict_reader = csv.DictReader(f)
             self.insulin = {}  # Initialize insulin dictionary
 
@@ -37,14 +37,22 @@ class DataLoader:
                 if key not in self.insulin:
                     self.insulin[key] = []  # Initialize list for each key
                 self.insulin[key].append(row)  # Append row dictionary to list
-            return self.insulin  
+            return self.insulin 
+
+    def read_from_csv(self, filename):
+        with open(filename, newline="") as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader)
+            print(header)
+            for row in reader:
+                print(row) 
 
     # Create data tables using pandas
     def getBGTable(self): 
         try:
             self.bgTable = pd.read_csv(
-                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/BGDataNov14.csv',
-                on_bad_lines='skip'
+                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile.csv',
+                #on_bad_lines='skip'
             )
             self.bgTable.set_index('EventDateTime')
             return self.bgTable
@@ -55,8 +63,8 @@ class DataLoader:
     def getInsulinTable(self):  
         try:
             self.insulinTable = pd.read_csv(
-                '/Users/aft/Downloads/Fixed Ariya Insulin data.csv',
-                on_bad_lines='skip'
+                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile.csv',
+                #on_bad_lines='skip'
             )
             self.insulinTable = self.insulinTable.set_index('CompletionDateTime')
             return self.insulinTable
@@ -284,26 +292,28 @@ bgTable = data_loader.getBGTable()
 insulin = data_loader.getInsulinDict()
 insulinTable = data_loader.getInsulinTable()
 
-print("\nBlood Glucose Data for November 18th, 2024:\n")
-bgOneDay = data_loader.getBGforOneDay("2024-11-18")
+
+
+print("\nBlood Glucose Data:\n")
+bgOneDay = data_loader.getBGforOneDay("2025-01-01")
 print(bgOneDay)
 
-print("\nInsulin Data for November 18th, 2024:\n")
-insulinOneDay = data_loader.getInsulinforOneDay("2024-11-18")
+print("\nInsulin Data:\n")
+insulinOneDay = data_loader.getInsulinforOneDay("2025-01-01")
 print(insulinOneDay)
 
-print("\nBlood Glucose Data for November 16-18, 2024:\n")
-bgPast3Days = data_loader.getPast3DaysBg("2024-11-18")
+print("\nBlood Glucose Data for 3 Days, 2024:\n")
+bgPast3Days = data_loader.getPast3DaysBg("2025-01-01")
 print(bgPast3Days)
 
-print("\nInsulin Data for November 16-18, 2024:\n")
-insulinPast3Days = data_loader.getPast3DaysInsulin("2024-11-18")
+print("\nInsulin Data for 3 days:\n")
+insulinPast3Days = data_loader.getPast3DaysInsulin("2025-01-01")
 print(insulinPast3Days)
 
-print("\nOvernight Blood Glucose Data for November 17-18, 2024:\n")
-nighttimeBg = data_loader.getNighttimeBg("2024-11-18")
+print("\nOvernight Blood Glucose Data:\n")
+nighttimeBg = data_loader.getNighttimeBg("2025-01-01")
 print(nighttimeBg)
 
-print("\nMorning Blood Glucose Data for November 18th, 2024:\n")
-morningBg = data_loader.getMorningBg("2024-11-18")
+print("\nMorning Blood Glucose Data:\n")
+morningBg = data_loader.getMorningBg("2025-01-01")
 print(morningBg)
