@@ -41,7 +41,7 @@ class DiabetesSimulator:
       
 
         steps = days * 24 * 60 // five_min_interval # what steps is actually supposed to be
-        steps = 288 # one day worth of steps
+        #steps = 288 # one day worth of steps
         delta = timedelta(minutes=5)
        
         b_day = 0
