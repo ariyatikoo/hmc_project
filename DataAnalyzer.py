@@ -287,5 +287,6 @@ class DataAnalyzer:
 data_analyzer = DataAnalyzer()
 
 summary = data_analyzer.Summary('2025-01-01', '1 day')
+print(summary)
 
 

@@ -16,7 +16,7 @@ class DataLoader:
 
     # Create dictionaries from CSV files
     def getBGDict(self):
-        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile.csv', 'r') as f:
+        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile_1.csv', 'r') as f:
             dict_reader = csv.DictReader(f)
             self.bg = {}  # Initialize bg dictionary
 
@@ -28,7 +28,7 @@ class DataLoader:
             return self.bg
         
     def getInsulinDict(self):
-        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile.csv', 'r') as f:
+        with open('/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile_1.csv', 'r') as f:
             dict_reader = csv.DictReader(f)
             self.insulin = {}  # Initialize insulin dictionary
 
@@ -51,7 +51,7 @@ class DataLoader:
     def getBGTable(self): 
         try:
             self.bgTable = pd.read_csv(
-                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile.csv',
+                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestBGFile_1.csv',
                 #on_bad_lines='skip'
             )
             self.bgTable.set_index('EventDateTime')
@@ -63,7 +63,7 @@ class DataLoader:
     def getInsulinTable(self):  
         try:
             self.insulinTable = pd.read_csv(
-                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile.csv',
+                '/Users/aft/VisualStudioCodeWorkspace/Python/hmc_project/TestInsulinFile_1.csv',
                 #on_bad_lines='skip'
             )
             self.insulinTable = self.insulinTable.set_index('CompletionDateTime')

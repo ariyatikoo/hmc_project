@@ -44,7 +44,9 @@ class Patient:
     
     
 patient_1 = Patient(patient_id=1, correction_factor=50, carb_ratio=10, basal_rate=1.0, target_bg=110, avrg_breakfast_carbs = 45, avrg_lunch_carbs = 55, avrg_dinner_carbs = 65) 
-print(patient_1)
+patient_2 = Patient(patient_id=1, correction_factor=50, carb_ratio=15, basal_rate=0.7, target_bg=110, avrg_breakfast_carbs = 30, avrg_lunch_carbs = 40, avrg_dinner_carbs = 50) 
+patient_3 = Patient(patient_id=1, correction_factor=50, carb_ratio=7, basal_rate=1.3, target_bg=110, avrg_breakfast_carbs = 60, avrg_lunch_carbs = 70, avrg_dinner_carbs = 80) 
+
 
 '''
 print(patient_1.breakfast_getter())
